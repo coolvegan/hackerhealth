@@ -220,6 +220,18 @@ func registerSharedTools(s *server.MCPServer, db *sqlite.DB) {
 	})
 }
 
+// optIntPtr liefert einen *int64 nur dann, wenn der Schlüssel im Request
+// vorhanden und > 0 ist. Fehlt der Schlüssel oder ist er 0, wird nil
+// zurückgegeben, sodass die DB NULL statt 0 speichert (verhindert
+// FOREIGN KEY constraint failed bei optionalen FK-Feldern).
+func optIntPtr(req mcp.CallToolRequest, key string) *int64 {
+	if v := req.GetInt(key, 0); v > 0 {
+		id := int64(v)
+		return &id
+	}
+	return nil
+}
+
 // --- HN Tools ---
 
 func registerHNTools(s *server.MCPServer, db *sqlite.DB) {
@@ -479,17 +491,12 @@ func registerHNTools(s *server.MCPServer, db *sqlite.DB) {
 		mcp.WithString("ai_hint", mcp.Description("AI hint for context")),
 		mcp.WithString("ai_note", mcp.Description("AI's own note")),
 	), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		userID := req.GetInt("user_id", 0)
-		threadID := req.GetInt("thread_id", 0)
-		patternID := int64(req.GetInt("pattern_id", 0))
-		confID := int64(req.GetInt("confidence_id", 0))
-		icd11ID := int64(req.GetInt("icd11_id", 0))
 		f := &hnmentalhealth.HNFinding{
-			UserID:       int64(userID),
-			ThreadID:     int64(threadID),
-			PatternID:    &patternID,
-			ConfidenceID: &confID,
-			ICD11ID:      &icd11ID,
+			UserID:       int64(req.GetInt("user_id", 0)),
+			ThreadID:     int64(req.GetInt("thread_id", 0)),
+			PatternID:    optIntPtr(req, "pattern_id"),
+			ConfidenceID: optIntPtr(req, "confidence_id"),
+			ICD11ID:      optIntPtr(req, "icd11_id"),
 			Evidence:     req.GetString("evidence", ""),
 			CommentScore: req.GetInt("comment_score", 0),
 			AIHint:       req.GetString("ai_hint", ""),
@@ -699,14 +706,11 @@ func registerHealthTools(s *server.MCPServer, db *sqlite.DB) {
 		mcp.WithString("ai_hint", mcp.Description("AI hint")),
 		mcp.WithString("ai_note", mcp.Description("AI note")),
 	), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		patternID := int64(req.GetInt("pattern_id", 0))
-		confID := int64(req.GetInt("confidence_id", 0))
-		icd11ID := int64(req.GetInt("icd11_id", 0))
 		f := &hnmentalhealth.HealthFinding{
 			PatientID:     int64(req.GetInt("patient_id", 0)),
-			PatternID:     &patternID,
-			ConfidenceID:  &confID,
-			ICD11ID:       &icd11ID,
+			PatternID:     optIntPtr(req, "pattern_id"),
+			ConfidenceID:  optIntPtr(req, "confidence_id"),
+			ICD11ID:       optIntPtr(req, "icd11_id"),
 			Etiology:      req.GetString("etiology", ""),
 			EvidenceChain: req.GetString("evidence_chain", ""),
 			Evidence:      req.GetString("evidence", ""),
