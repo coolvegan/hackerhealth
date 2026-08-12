@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HN Mental Health Dashboard</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --card2: #0f3460;
+  --text: #e0e0e0;
+  --muted: #8892b0;
+  --accent: #e94560;
+  --green: #4caf50;
+  --yellow: #ff9800;
+  --blue: #2196f3;
+  --red: #f44336;
+  --healthy: #2e7d32;
+  --border: #2a2a4a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+header h1 { font-size: 1.3rem; color: var(--accent); }
+nav { display: flex; gap: 8px; flex-wrap: wrap; }
+nav button { background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+nav button:hover, nav button.active { background: var(--accent); border-color: var(--accent); }
+main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+.stat-card .value { font-size: 2rem; font-weight: 700; }
+.stat-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.stat-card.healthy .value { color: var(--green); }
+.stat-card.notable .value { color: var(--accent); }
+.stat-card.total .value { color: var(--blue); }
+.filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filters button { background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+.filters button.active { background: var(--accent); border-color: var(--accent); }
+table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+th { background: var(--card2); color: var(--muted); font-weight: 600; position: sticky; top: 0; }
+tr:hover { background: rgba(233,69,96,0.08); cursor: pointer; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.badge-healthy { background: var(--healthy); color: #fff; }
+.badge-suspected { background: var(--yellow); color: #000; }
+.badge-observation { background: var(--blue); color: #fff; }
+.badge-secure { background: var(--red); color: #fff; }
+.bar { height: 6px; border-radius: 3px; background: var(--border); margin-top: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.bar-healthy { background: var(--green); }
+.bar-notable { background: var(--accent); }
+.detail-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 16px; display: none; }
+.detail-panel.open { display: block; }
+.detail-panel h2 { color: var(--accent); margin-bottom: 12px; }
+.detail-panel h3 { color: var(--muted); font-size: 0.9rem; margin: 16px 0 8px; }
+.finding { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; }
+.finding .user { font-weight: 600; color: var(--accent); }
+.finding .meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.finding .evidence { font-size: 0.85rem; margin-top: 6px; font-style: italic; color: #ccc; }
+.toxic-user { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 8px; }
+.toxic-user .username { font-weight: 600; color: var(--accent); font-size: 1rem; }
+.toxic-user .stats-row { display: flex; gap: 16px; margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
+.toxic-user .patterns { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+.toxic-user .pattern-tag { background: var(--card); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+.toxic-user .icd11 { margin-top: 4px; font-size: 0.75rem; color: var(--yellow); }
+.chart { display: flex; gap: 4px; align-items: flex-end; height: 120px; margin: 12px 0; }
+.chart-bar { flex: 1; border-radius: 3px 3px 0 0; min-width: 20px; position: relative; }
+.chart-bar .bar-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
+.chart-bar .bar-value { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; font-weight: 600; }
+.loading { text-align: center; padding: 40px; color: var(--muted); }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 HN Mental Health</h1>
+  <nav>
+    <button class="active" data-view="threads">Threads</button>
+    <button data-view="users">Toxische User</button>
+    <button data-view="stats">Statistik</button>
+  </nav>
+</header>
+<main>
+  <div class="stats" id="stats-bar"></div>
+  <div class="filters" id="filters"></div>
+  <div id="content"></div>
+  <div class="detail-panel" id="detail"></div>
+</main>
+<script>
+const API = '';
+let currentView = 'threads';
+let currentFilter = 'all';
+let threads = [];
+let toxicUsers = [];
+let stats = {};
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function load() {
+  try {
+    [threads, toxicUsers, stats] = await Promise.all([
+      fetchJSON(API + '/api/threads'),
+      fetchJSON(API + '/api/users/toxic'),
+      fetchJSON(API + '/api/stats'),
+    ]);
+    renderStats();
+    renderView();
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<div class="loading">No data yet. Run the parser or add findings via MCP.</div>';
+  }
+}
+
+function renderStats() {
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat-card total"><div class="value">${stats.total_threads||0}</div><div class="label">Threads</div></div>
+    <div class="stat-card healthy"><div class="value">${stats.healthy_threads||0}</div><div class="label">Gesund</div></div>
+    <div class="stat-card notable"><div class="value">${stats.notable_threads||0}</div><div class="label">Auffällig</div></div>
+    <div class="stat-card total"><div class="value">${toxicUsers.length}</div><div class="label">Toxische User</div></div>
+  `;
+}
+
+function renderView() {
+  document.getElementById('detail').classList.remove('open');
+  if (currentView === 'threads') renderThreads();
+  else if (currentView === 'users') renderUsers();
+  else if (currentView === 'stats') renderStatsView();
+}
+
+function renderThreads() {
+  const filters = document.getElementById('filters');
+  filters.innerHTML = `
+    <button class="${currentFilter==='all'?'active':''}" onclick="setFilter('all')">Alle</button>
+    <button class="${currentFilter==='healthy'?'active':''}" onclick="setFilter('healthy')">✅ Gesund</button>
+    <button class="${currentFilter==='notable'?'active':''}" onclick="setFilter('notable')">⚠️ Auffällig</button>
+  `;
+
+  let filtered = threads;
+  if (currentFilter === 'healthy') filtered = threads.filter(t => t.notable_count === 0 && t.total_findings > 0);
+  else if (currentFilter === 'notable') filtered = threads.filter(t => t.notable_count > 0);
+
+  const maxScore = Math.max(...threads.map(t => t.score), 1);
+  const maxFindings = Math.max(...threads.map(t => t.total_findings), 1);
+
+  let html = `<table><thead><tr>
+    <th>Story ID</th><th>Title</th><th>Score</th><th>Findings</th><th>Health</th><th>Trauma</th>
+  </tr></thead><tbody>`;
+
+  for (const t of filtered) {
+    const healthPct = t.total_findings > 0 ? Math.round((t.healthy_count / t.total_findings) * 100) : 100;
+    const notablePct = 100 - healthPct;
+    const traumaClass = t.trauma_potential === 'high' ? 'badge-suspected' : t.trauma_potential === 'medium' ? 'badge-observation' : 'badge-healthy';
+    html += `<tr onclick="showThread(${t.id})">
+      <td>${t.story_id}</td>
+      <td>${esc(t.title||'?')}</td>
+      <td>${t.score}</td>
+      <td>${t.total_findings}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:0.8rem">${healthPct}%</span>
+          <div class="bar" style="flex:1"><div class="bar-fill bar-healthy" style="width:${healthPct}%"></div></div>
+        </div>
+      </td>
+      <td><span class="badge ${traumaClass}">${t.trauma_potential||'?'}</span></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  if (filtered.length === 0) html = '<div class="loading">No threads match this filter.</div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+async function showThread(id) {
+  const td = await fetchJSON(API + '/api/thread/' + id);
+  const panel = document.getElementById('detail');
+  let html = `<h2>${esc(td.thread.title||'Story '+td.thread.story_id)}</h2>`;
+  html += `<div style="color:var(--muted);font-size:0.85rem;margin-bottom:12px">Score: ${td.thread.score} · Story ID: ${td.thread.story_id}</div>`;
+
+  if (td.quality) {
+    html += `<div style="display:flex;gap:12px;margin-bottom:12px">`;
+    html += `<span class="badge badge-${td.quality.trauma_potential==='high'?'suspected':td.quality.trauma_potential==='medium'?'observation':'healthy'}">Trauma: ${td.quality.trauma_potential||'?'}</span>`;
+    html += `<span style="color:var(--muted)">Healthy: ${td.quality.healthy_count} · Notable: ${td.quality.notable_count}</span>`;
+    html += `</div>`;
+  }
+
+  html += `<h3>Findings (${td.findings.length})</h3>`;
+  for (const f of td.findings) {
+    const confClass = f.confidence === 'secure' ? 'badge-secure' : f.confidence === 'suspected' ? 'badge-suspected' : f.confidence === 'observation' ? 'badge-observation' : 'badge-healthy';
+    html += `<div class="finding">
+      <div class="user">@${esc(f.username||'?')}</div>
+      <div class="meta">
+        <span class="badge ${confClass}">${f.confidence||'?'}</span>
+        ${f.pattern_name ? `<span style="margin-left:8px">Pattern: ${esc(f.pattern_name)}</span>` : ''}
+        ${f.icd11_code ? `<span style="margin-left:8px;color:var(--yellow)">ICD-11: ${esc(f.icd11_code)}</span>` : ''}
+        ${f.comment_score ? `<span style="margin-left:8px">Score: ${f.comment_score}</span>` : ''}
+      </div>
+      ${f.evidence ? `<div class="evidence">"${esc(f.evidence)}"</div>` : ''}
+    </div>`;
+  }
+  panel.innerHTML = html;
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth'});
+}
+
+function renderUsers() {
+  document.getElementById('filters').innerHTML = '';
+  let html = '';
+  for (const u of toxicUsers) {
+    const patterns = Object.entries(u.patterns).map(([k,v]) => `<span class="pattern-tag">${k} (${v})</span>`).join('');
+    html += `<div class="toxic-user">
+      <div class="username">@${esc(u.username)}</div>
+      <div class="stats-row">
+        <span>Findings: ${u.total_findings}</span>
+        <span style="color:var(--accent)">Auffällig: ${u.notable_count}</span>
+      </div>
+      <div class="patterns">${patterns}</div>
+      ${u.icd11_refs.length ? `<div class="icd11">ICD-11: ${[...new Set(u.icd11_refs)].join(', ')}</div>` : ''}
+    </div>`;
+  }
+  if (!html) html = '<div class="loading">No toxic users found.</div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderStatsView() {
+  document.getElementById('filters').innerHTML = '';
+  let html = '<h2 style="color:var(--accent);margin-bottom:16px">Pattern-Verteilung</h2>';
+  if (stats.pattern_distribution) {
+    const entries = Object.entries(stats.pattern_distribution).sort((a,b) => b[1]-a[1]);
+    const max = Math.max(...entries.map(e=>e[1]), 1);
+    html += '<div class="chart">';
+    for (const [name, count] of entries) {
+      const h = Math.round((count/max)*100);
+      const colors = ['#e94560','#ff9800','#2196f3','#4caf50','#9c27b0','#00bcd4','#ff5722','#607d8b','#795548','#cddc39'];
+      const color = colors[entries.indexOf([name,count]) % colors.length];
+      html += `<div class="chart-bar" style="height:${h}px;background:${color}">
+        <div class="bar-value">${count}</div>
+        <div class="bar-label">${name}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  html += '<h2 style="color:var(--accent);margin:24px 0 16px">Konfidenz-Verteilung</h2>';
+  if (stats.confidence_distribution) {
+    const entries = Object.entries(stats.confidence_distribution).sort((a,b) => b[1]-a[1]);
+    const max = Math.max(...entries.map(e=>e[1]), 1);
+    html += '<div class="chart">';
+    for (const [name, count] of entries) {
+      const h = Math.round((count/max)*100);
+      const color = name === 'healthy' ? '#4caf50' : name === 'suspected' ? '#ff9800' : name === 'observation' ? '#2196f3' : '#f44336';
+      html += `<div class="chart-bar" style="height:${h}px;background:${color}">
+        <div class="bar-value">${count}</div>
+        <div class="bar-label">${name}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+function setFilter(f) { currentFilter = f; renderView(); }
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Nav
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    currentFilter = 'all';
+    renderView();
+  });
+});
+
+load();
+</script>
+</body>
+</html>

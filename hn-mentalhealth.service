@@ -1,0 +1,19 @@
+[Unit]
+Description=hn-mentalhealth MCP-SSE + Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+Group=hermes
+WorkingDirectory=/home/hermes/hn-mentalhealth
+ExecStart=/home/hermes/hn-mentalhealth/hn-mentalhealth-mcp \
+    --db /home/hermes/hn-mentalhealth/hn-mentalhealth.db \
+    --mcp-addr localhost:14444 \
+    --dashboard-addr localhost:17776
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
