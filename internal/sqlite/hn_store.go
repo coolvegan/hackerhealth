@@ -423,12 +423,20 @@ func (s *HNStore) GetThreadQualityByThreadID(threadID int64) (*hnmentalhealth.Th
 }
 
 func (s *HNStore) UpdateThreadQuality(tq *hnmentalhealth.ThreadQuality) error {
-	_, err := s.conn.Exec(
+	res, err := s.conn.Exec(
 		`UPDATE thread_quality SET characterization_id = ?, interaction_id = ?, trauma_potential = ?, healthy_count = ?, notable_count = ? WHERE thread_id = ?`,
 		nullInt64Ptr(tq.CharacterizationID), nullInt64Ptr(tq.InteractionID),
 		nullString(tq.TraumaPotential), tq.HealthyCount, tq.NotableCount, tq.ThreadID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	// Wenn keine Zeile betroffen war, existiert der Thread-Qualitäts-Eintrag
+	// noch nicht — der Aufrufer soll dann Create ausführen.
+	if n, err := res.RowsAffected(); err == nil && n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (s *HNStore) DeleteThreadQuality(threadID int64) error {

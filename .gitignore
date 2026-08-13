@@ -1,3 +1,8 @@
 hn-mentalhealth
 hn-mentalhealth-mcp
 hn-mentalhealth.db
+backfill-mapping.md
+backfill-progress.txt
+backfill-watchdog.py
+backfill-watchdog.state
+backfill-watchdog.state.stale
