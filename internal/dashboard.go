@@ -53,11 +53,13 @@ func RegisterDashboardRoutes(mux *http.ServeMux, db *sqlite.DB) {
 			}
 			if tq, err := db.HN.GetThreadQualityByThreadID(t.ID); err == nil {
 				twq.TraumaPotential = tq.TraumaPotential
-				twq.HealthyCount = tq.HealthyCount
-				twq.NotableCount = tq.NotableCount
 			}
 			findings, _ := db.HN.ListHNFindingsByThread(t.ID)
 			twq.TotalFindings = len(findings)
+			if healthy, notable, err := db.HN.CountThreadHealthyNotable(t.ID); err == nil {
+				twq.HealthyCount = healthy
+				twq.NotableCount = notable
+			}
 			result = append(result, twq)
 		}
 		json.NewEncoder(w).Encode(result)
@@ -125,7 +127,12 @@ func RegisterDashboardRoutes(mux *http.ServeMux, db *sqlite.DB) {
 		}
 		td := ThreadDetail{Thread: thread, Findings: fwu}
 		if tq, err := db.HN.GetThreadQualityByThreadID(id); err == nil {
-			td.Quality = tq
+			quality := *tq
+			if healthy, notable, cerr := db.HN.CountThreadHealthyNotable(id); cerr == nil {
+				quality.HealthyCount = healthy
+				quality.NotableCount = notable
+			}
+			td.Quality = &quality
 		}
 		json.NewEncoder(w).Encode(td)
 	})

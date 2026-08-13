@@ -1,282 +1,871 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HN Mental Health Dashboard</title>
-<style>
-:root {
-  --bg: #1a1a2e;
-  --card: #16213e;
-  --card2: #0f3460;
-  --text: #e0e0e0;
-  --muted: #8892b0;
-  --accent: #e94560;
-  --green: #4caf50;
-  --yellow: #ff9800;
-  --blue: #2196f3;
-  --red: #f44336;
-  --healthy: #2e7d32;
-  --border: #2a2a4a;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-header h1 { font-size: 1.3rem; color: var(--accent); }
-nav { display: flex; gap: 8px; flex-wrap: wrap; }
-nav button { background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-nav button:hover, nav button.active { background: var(--accent); border-color: var(--accent); }
-main { max-width: 1400px; margin: 0 auto; padding: 24px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
-.stat-card .value { font-size: 2rem; font-weight: 700; }
-.stat-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-.stat-card.healthy .value { color: var(--green); }
-.stat-card.notable .value { color: var(--accent); }
-.stat-card.total .value { color: var(--blue); }
-.filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.filters button { background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-.filters button.active { background: var(--accent); border-color: var(--accent); }
-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; }
-th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-th { background: var(--card2); color: var(--muted); font-weight: 600; position: sticky; top: 0; }
-tr:hover { background: rgba(233,69,96,0.08); cursor: pointer; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-.badge-healthy { background: var(--healthy); color: #fff; }
-.badge-suspected { background: var(--yellow); color: #000; }
-.badge-observation { background: var(--blue); color: #fff; }
-.badge-secure { background: var(--red); color: #fff; }
-.bar { height: 6px; border-radius: 3px; background: var(--border); margin-top: 4px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-.bar-healthy { background: var(--green); }
-.bar-notable { background: var(--accent); }
-.detail-panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 16px; display: none; }
-.detail-panel.open { display: block; }
-.detail-panel h2 { color: var(--accent); margin-bottom: 12px; }
-.detail-panel h3 { color: var(--muted); font-size: 0.9rem; margin: 16px 0 8px; }
-.finding { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; }
-.finding .user { font-weight: 600; color: var(--accent); }
-.finding .meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-.finding .evidence { font-size: 0.85rem; margin-top: 6px; font-style: italic; color: #ccc; }
-.toxic-user { background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 8px; }
-.toxic-user .username { font-weight: 600; color: var(--accent); font-size: 1rem; }
-.toxic-user .stats-row { display: flex; gap: 16px; margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
-.toxic-user .patterns { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
-.toxic-user .pattern-tag { background: var(--card); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-.toxic-user .icd11 { margin-top: 4px; font-size: 0.75rem; color: var(--yellow); }
-.chart { display: flex; gap: 4px; align-items: flex-end; height: 120px; margin: 12px 0; }
-.chart-bar { flex: 1; border-radius: 3px 3px 0 0; min-width: 20px; position: relative; }
-.chart-bar .bar-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
-.chart-bar .bar-value { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; font-weight: 600; }
-.loading { text-align: center; padding: 40px; color: var(--muted); }
-.hidden { display: none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>~/mental-health.dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      --bg: #060a06;
+      --bg-panel: #0b120b;
+      --bg-card: #0d150d;
+      --line: #17351a;
+      --line-soft: #0f210f;
+      --green: #00ff66;
+      --green-dim: #22a83f;
+      --green-dimmer: #14601f;
+      --green-faint: #0c3d13;
+      --amber: #ffb000;
+      --red: #ff4444;
+      --shadow-glow: 0 0 10px rgba(0, 255, 102, .25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--green-dim);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(0, 255, 102, .035) 0px, rgba(0, 255, 102, .035) 1px, transparent 1px, transparent 3px);
+      z-index: 50;
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .55) 100%);
+      z-index: 51;
+    }
+
+    /* ---------- Titlebar ---------- */
+    #titlebar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green-faint);
+      border: 1px solid var(--line);
+    }
+
+    #titlebar .path {
+      margin-left: 6px;
+      font-size: .8rem;
+      color: var(--green-dimmer);
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+
+    #titlebar .path .cmd {
+      color: var(--green);
+    }
+
+    #titlebar .path .blink {
+      display: inline-block;
+      width: 7px;
+      height: 14px;
+      background: var(--green);
+      margin-left: 2px;
+      vertical-align: -2px;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    #statusline {
+      margin-left: auto;
+      font-size: .72rem;
+      color: var(--green-dimmer);
+      white-space: nowrap;
+    }
+
+    #statusline .ok {
+      color: var(--green);
+    }
+
+    #metrics {
+      display: flex;
+      gap: 14px;
+      font-size: .72rem;
+      color: var(--green-dimmer);
+      flex-wrap: wrap;
+      margin-left: 18px;
+    }
+
+    #metrics b {
+      color: var(--green);
+    }
+
+    /* ---------- Sub-nav (views) ---------- */
+    #subnav {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg);
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .nav-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      color: var(--green-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      padding: 6px 12px;
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+      letter-spacing: .3px;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--green-dimmer);
+      color: var(--green);
+    }
+
+    .nav-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .nav-btn:active {
+      transform: translateY(1px);
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--line-soft);
+      color: var(--green-dimmer);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .filter-btn:hover {
+      color: var(--green-dim);
+      border-color: var(--green-dimmer);
+    }
+
+    .filter-btn.active {
+      color: var(--green);
+      border-color: var(--green-dimmer);
+      background: var(--green-faint);
+    }
+
+    /* ---------- Layout ---------- */
+    #stage {
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    #layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      height: 100%;
+      padding: 16px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      #layout {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+    }
+
+    .col {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 2px 10px;
+      flex-wrap: wrap;
+    }
+
+    .col-title {
+      font-family: 'VT323', monospace;
+      font-size: 1.3rem;
+      color: var(--green);
+      text-shadow: 0 0 6px rgba(0, 255, 102, .18);
+      letter-spacing: .5px;
+    }
+
+    .col-title::before {
+      content: "> ";
+      color: var(--green-dimmer);
+    }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ---------- Table ---------- */
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      border-radius: 2px;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: var(--green-faint);
+      border-radius: 3px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-panel);
+      z-index: 2;
+    }
+
+    th {
+      text-align: left;
+      padding: 9px 12px;
+      color: var(--green-dimmer);
+      font-weight: 500;
+      letter-spacing: .5px;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    th:hover {
+      color: var(--green-dim);
+    }
+
+    th.sorted {
+      color: var(--green);
+    }
+
+    th .arrow {
+      display: inline-block;
+      width: 10px;
+      opacity: .6;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: top;
+    }
+
+    tbody tr.thread-row {
+      cursor: pointer;
+    }
+
+    tbody tr.thread-row:hover {
+      background: var(--green-faint);
+    }
+
+    tbody tr.thread-row.expanded {
+      background: rgba(0, 255, 102, .05);
+    }
+
+    .mono-id {
+      color: var(--green-dimmer);
+    }
+
+    .title-cell {
+      color: var(--green-dim);
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .title-cell a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .title-cell a:hover {
+      color: var(--green);
+      text-decoration: underline;
+    }
+
+    .health-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 110px;
+    }
+
+    .health-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--line);
+      position: relative;
+    }
+
+    .health-bar i {
+      position: absolute;
+      inset: 0;
+      background: var(--green-dim);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: .68rem;
+      padding: 1px 6px;
+      border-radius: 2px;
+      letter-spacing: .3px;
+      border: 1px solid;
+    }
+
+    .badge-healthy {
+      color: var(--green);
+      border-color: var(--green-dimmer);
+      background: var(--green-faint);
+    }
+
+    .badge-suspected {
+      color: var(--amber);
+      border-color: #6b4d00;
+      background: rgba(255, 176, 0, .08);
+    }
+
+    .badge-observation {
+      color: var(--green-dim);
+      border-color: var(--line);
+      background: transparent;
+    }
+
+    .badge-secure {
+      color: var(--red);
+      border-color: #5c1414;
+      background: rgba(255, 68, 68, .08);
+    }
+
+    /* ---------- Accordion detail ---------- */
+    tr.detail-row td {
+      padding: 0;
+      border-bottom: 1px solid var(--line);
+      background: #081008;
+    }
+
+    .detail-inner {
+      padding: 12px 16px 16px 28px;
+      border-left: 2px solid var(--green-dimmer);
+      margin: 0 12px 12px;
+    }
+
+    .detail-inner .dmeta {
+      font-size: .72rem;
+      color: var(--green-dimmer);
+      margin-bottom: 10px;
+    }
+
+    .finding {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line-soft);
+      font-size: .8rem;
+    }
+
+    .finding:last-child {
+      border-bottom: none;
+    }
+
+    .finding::before {
+      content: "├─ ";
+      color: var(--green-faint);
+    }
+
+    .finding .fuser {
+      color: var(--green);
+    }
+
+    .finding .fmeta {
+      color: var(--green-dimmer);
+      margin-left: 4px;
+    }
+
+    .finding .fevidence {
+      display: block;
+      margin: 4px 0 0 16px;
+      color: var(--green-dim);
+      font-style: italic;
+      opacity: .85;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--green-dimmer);
+      font-size: .85rem;
+    }
+
+    /* ---------- Sidebar: toxic users ---------- */
+    #sidebar {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      border-radius: 2px;
+    }
+
+    .user-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .user-list::-webkit-scrollbar-thumb {
+      background: var(--green-faint);
+      border-radius: 3px;
+    }
+
+    .toxic-user {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line-soft);
+      font-size: .78rem;
+    }
+
+    .toxic-user:hover {
+      background: var(--green-faint);
+    }
+
+    .toxic-user .uname {
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .toxic-user .uname::before {
+      content: "@";
+      color: var(--green-dimmer);
+    }
+
+    .toxic-user .ustats {
+      color: var(--green-dimmer);
+      font-size: .7rem;
+      margin-top: 3px;
+    }
+
+    .toxic-user .ustats .warn {
+      color: var(--amber);
+    }
+
+    .toxic-user .patterns {
+      margin-top: 5px;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .ptag {
+      font-size: .66rem;
+      color: var(--green-dim);
+      border: 1px solid var(--line);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    .toxic-user .icd {
+      margin-top: 4px;
+      font-size: .66rem;
+      color: var(--amber);
+      opacity: .85;
+    }
+
+    /* ---------- ASCII bar charts (stats view) ---------- */
+    .chart-block {
+      padding: 4px 2px 18px;
+    }
+
+    .chart-block h3 {
+      font-family: 'VT323', monospace;
+      font-size: 1.15rem;
+      color: var(--green);
+      margin: 0 0 10px;
+      letter-spacing: .5px;
+    }
+
+    .chart-block h3::before {
+      content: "> ";
+      color: var(--green-dimmer);
+    }
+
+    .ascii-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .78rem;
+      padding: 3px 0;
+    }
+
+    .ascii-row .rlabel {
+      width: 160px;
+      flex: 0 0 160px;
+      color: var(--green-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ascii-row .rbar {
+      color: var(--green);
+      letter-spacing: -1px;
+      white-space: nowrap;
+    }
+
+    .ascii-row .rval {
+      color: var(--green-dimmer);
+      margin-left: 4px;
+    }
+
+    .msg {
+      text-align: center;
+      padding: 40px;
+      color: var(--green-dimmer);
+      font-size: .9rem;
+    }
+
+    .msg .glow {
+      color: var(--green);
+      text-shadow: var(--shadow-glow);
+    }
+  </style>
 </head>
+
 <body>
-<header>
-  <h1>🧠 HN Mental Health</h1>
-  <nav>
-    <button class="active" data-view="threads">Threads</button>
-    <button data-view="users">Toxische User</button>
-    <button data-view="stats">Statistik</button>
-  </nav>
-</header>
-<main>
-  <div class="stats" id="stats-bar"></div>
-  <div class="filters" id="filters"></div>
-  <div id="content"></div>
-  <div class="detail-panel" id="detail"></div>
-</main>
-<script>
-const API = '';
-let currentView = 'threads';
-let currentFilter = 'all';
-let threads = [];
-let toxicUsers = [];
-let stats = {};
 
-async function fetchJSON(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
-}
+  <div id="titlebar">
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="path"><span class="cmd">guest@hn-mh</span>:~$ tail -f dashboard.json<span class="blink"></span></span>
+    <span id="metrics"></span>
+    <span id="statusline">verbinde…</span>
+  </div>
 
-async function load() {
-  try {
-    [threads, toxicUsers, stats] = await Promise.all([
-      fetchJSON(API + '/api/threads'),
-      fetchJSON(API + '/api/users/toxic'),
-      fetchJSON(API + '/api/stats'),
-    ]);
-    renderStats();
-    renderView();
-  } catch(e) {
-    document.getElementById('content').innerHTML = '<div class="loading">No data yet. Run the parser or add findings via MCP.</div>';
-  }
-}
+  <div id="subnav">
+    <button class="nav-btn active" data-view="threads">threads</button>
+    <button class="nav-btn" data-view="stats">statistik</button>
+  </div>
 
-function renderStats() {
-  document.getElementById('stats-bar').innerHTML = `
-    <div class="stat-card total"><div class="value">${stats.total_threads||0}</div><div class="label">Threads</div></div>
-    <div class="stat-card healthy"><div class="value">${stats.healthy_threads||0}</div><div class="label">Gesund</div></div>
-    <div class="stat-card notable"><div class="value">${stats.notable_threads||0}</div><div class="label">Auffällig</div></div>
-    <div class="stat-card total"><div class="value">${toxicUsers.length}</div><div class="label">Toxische User</div></div>
-  `;
-}
-
-function renderView() {
-  document.getElementById('detail').classList.remove('open');
-  if (currentView === 'threads') renderThreads();
-  else if (currentView === 'users') renderUsers();
-  else if (currentView === 'stats') renderStatsView();
-}
-
-function renderThreads() {
-  const filters = document.getElementById('filters');
-  filters.innerHTML = `
-    <button class="${currentFilter==='all'?'active':''}" onclick="setFilter('all')">Alle</button>
-    <button class="${currentFilter==='healthy'?'active':''}" onclick="setFilter('healthy')">✅ Gesund</button>
-    <button class="${currentFilter==='notable'?'active':''}" onclick="setFilter('notable')">⚠️ Auffällig</button>
-  `;
-
-  let filtered = threads;
-  if (currentFilter === 'healthy') filtered = threads.filter(t => t.notable_count === 0 && t.total_findings > 0);
-  else if (currentFilter === 'notable') filtered = threads.filter(t => t.notable_count > 0);
-
-  const maxScore = Math.max(...threads.map(t => t.score), 1);
-  const maxFindings = Math.max(...threads.map(t => t.total_findings), 1);
-
-  let html = `<table><thead><tr>
-    <th>Story ID</th><th>Title</th><th>Score</th><th>Findings</th><th>Health</th><th>Trauma</th>
-  </tr></thead><tbody>`;
-
-  for (const t of filtered) {
-    const healthPct = t.total_findings > 0 ? Math.round((t.healthy_count / t.total_findings) * 100) : 100;
-    const notablePct = 100 - healthPct;
-    const traumaClass = t.trauma_potential === 'high' ? 'badge-suspected' : t.trauma_potential === 'medium' ? 'badge-observation' : 'badge-healthy';
-    html += `<tr onclick="showThread(${t.id})">
-      <td>${t.story_id}</td>
-      <td>${esc(t.title||'?')}</td>
-      <td>${t.score}</td>
-      <td>${t.total_findings}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:0.8rem">${healthPct}%</span>
-          <div class="bar" style="flex:1"><div class="bar-fill bar-healthy" style="width:${healthPct}%"></div></div>
+  <div id="stage">
+    <div id="layout">
+      <div class="col" id="main-col">
+        <div class="col-header">
+          <span class="col-title" id="col-title">threads</span>
+          <div class="filters" id="filters"></div>
         </div>
-      </td>
-      <td><span class="badge ${traumaClass}">${t.trauma_potential||'?'}</span></td>
+        <div id="content" class="table-wrap">
+          <div class="msg">Lade Daten<span class="glow">…</span></div>
+        </div>
+      </div>
+      <div class="col" id="sidebar">
+        <div class="col-header">
+          <span class="col-title" id="sidebar-title">toxische user</span>
+        </div>
+        <div class="user-list" id="user-list">
+          <div class="msg">Lade<span class="glow">…</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let currentView = 'threads';
+    let currentFilter = 'all';
+    let threads = [];
+    let toxicUsers = [];
+    let stats = {};
+    let sortKey = 'score';
+    let sortDir = 'desc';
+    let expandedId = null;
+    let expandedCache = {};
+
+    async function fetchJSON(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }
+
+    async function load() {
+      try {
+        [threads, toxicUsers, stats] = await Promise.all([
+          fetchJSON(API + '/api/threads'),
+          fetchJSON(API + '/api/users/toxic'),
+          fetchJSON(API + '/api/stats'),
+        ]);
+        document.getElementById('statusline').innerHTML = '<span class="ok">● verbunden</span>';
+        renderMetrics();
+        renderUserList();
+        renderView();
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="msg" style="color:var(--red)">Keine Daten. Parser starten oder Findings via MCP hinzufügen.</div>';
+        document.getElementById('user-list').innerHTML = '';
+        document.getElementById('statusline').innerHTML = '<span style="color:var(--red)">● Fehler</span>';
+      }
+    }
+
+    function renderMetrics() {
+      document.getElementById('metrics').innerHTML =
+        `threads:<b>${stats.total_threads || 0}</b> gesund:<b>${stats.healthy_threads || 0}</b> auffällig:<b>${stats.notable_threads || 0}</b> user:<b>${toxicUsers.length}</b>`;
+    }
+
+    function esc(s) {return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');}
+
+    /* ---------- View switching ---------- */
+    document.querySelectorAll('#subnav .nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#subnav .nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentView = btn.dataset.view;
+        document.getElementById('col-title').textContent = currentView === 'stats' ? 'statistik' : 'threads';
+        renderView();
+      });
+    });
+
+    function renderView() {
+      if (currentView === 'threads') renderThreads();
+      else renderStatsView();
+    }
+
+    /* ---------- Sorting ---------- */
+    function trumaRank(t) {return t === 'high' ? 2 : t === 'medium' ? 1 : 0;}
+
+    function sortThreads(list) {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      return [...list].sort((a, b) => {
+        let av, bv;
+        switch (sortKey) {
+          case 'story_id': av = a.story_id; bv = b.story_id; break;
+          case 'score': av = a.score; bv = b.score; break;
+          case 'findings': av = a.total_findings; bv = b.total_findings; break;
+          case 'health': av = a.total_findings ? a.healthy_count / a.total_findings : 1; bv = b.total_findings ? b.healthy_count / b.total_findings : 1; break;
+          case 'trauma': av = trumaRank(a.trauma_potential); bv = trumaRank(b.trauma_potential); break;
+          default: av = a.score; bv = b.score;
+        }
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+    }
+
+    function setSort(key) {
+      if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else {sortKey = key; sortDir = 'desc';}
+      renderThreads();
+    }
+
+    function arrow(key) {
+      if (sortKey !== key) return '';
+      return sortDir === 'asc' ? '▲' : '▼';
+    }
+
+    /* ---------- Threads table ---------- */
+    function renderThreads() {
+      document.getElementById('filters').innerHTML = `
+    <button class="filter-btn ${currentFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')">alle</button>
+    <button class="filter-btn ${currentFilter === 'healthy' ? 'active' : ''}" onclick="setFilter('healthy')">gesund</button>
+    <button class="filter-btn ${currentFilter === 'notable' ? 'active' : ''}" onclick="setFilter('notable')">auffällig</button>
+  `;
+
+      let filtered = threads;
+      if (currentFilter === 'healthy') filtered = threads.filter(t => t.notable_count === 0 && t.total_findings > 0);
+      else if (currentFilter === 'notable') filtered = threads.filter(t => t.notable_count > 0);
+      filtered = sortThreads(filtered);
+
+      const cols = [
+        ['story_id', 'id'], ['title', 'title'], ['score', 'score'],
+        ['findings', 'findings'], ['health', 'health'], ['trauma', 'trauma'],
+      ];
+
+      let html = '<table><thead><tr>';
+      for (const [key, label] of cols) {
+        const sortable = key !== 'title';
+        html += `<th class="${sortKey === key ? 'sorted' : ''}" ${sortable ? `onclick="setSort('${key}')"` : ''}>${label} <span class="arrow">${arrow(key)}</span></th>`;
+      }
+      html += '</tr></thead><tbody>';
+
+      if (filtered.length === 0) {
+        html += `<tr><td colspan="6"><div class="loading">Keine Threads für diesen Filter.</div></td></tr>`;
+      }
+
+      for (const t of filtered) {
+        const healthPct = t.total_findings > 0 ? Math.min(100, Math.round((t.healthy_count / t.total_findings) * 100)) : 100;
+        const traumaClass = t.trauma_potential === 'high' ? 'badge-suspected' : t.trauma_potential === 'medium' ? 'badge-observation' : 'badge-healthy';
+        const isOpen = expandedId === t.id;
+        html += `<tr class="thread-row ${isOpen ? 'expanded' : ''}" onclick="toggleThread(${t.id})">
+      <td class="mono-id">${t.story_id}</td>
+      <td class="title-cell" title="${esc(t.title || '?')}">${esc(t.title || '?')}</td>
+      <td class="mono-id">${t.score}</td>
+      <td class="mono-id">${t.total_findings}</td>
+      <td><div class="health-cell"><span class="mono-id">${healthPct}%</span><div class="health-bar"><i style="width:${healthPct}%"></i></div></div></td>
+      <td><span class="badge ${traumaClass}">${t.trauma_potential || '?'}</span></td>
     </tr>`;
-  }
-  html += '</tbody></table>';
-  if (filtered.length === 0) html = '<div class="loading">No threads match this filter.</div>';
-  document.getElementById('content').innerHTML = html;
-}
+        if (isOpen) {
+          html += `<tr class="detail-row"><td colspan="6"><div class="detail-inner" id="detail-inner-${t.id}"><div class="loading">Lade Findings…</div></div></td></tr>`;
+        }
+      }
+      html += '</tbody></table>';
+      document.getElementById('content').innerHTML = html;
 
-async function showThread(id) {
-  const td = await fetchJSON(API + '/api/thread/' + id);
-  const panel = document.getElementById('detail');
-  let html = `<h2>${esc(td.thread.title||'Story '+td.thread.story_id)}</h2>`;
-  html += `<div style="color:var(--muted);font-size:0.85rem;margin-bottom:12px">Score: ${td.thread.score} · Story ID: ${td.thread.story_id}</div>`;
+      if (expandedId !== null) loadThreadDetail(expandedId);
+    }
 
-  if (td.quality) {
-    html += `<div style="display:flex;gap:12px;margin-bottom:12px">`;
-    html += `<span class="badge badge-${td.quality.trauma_potential==='high'?'suspected':td.quality.trauma_potential==='medium'?'observation':'healthy'}">Trauma: ${td.quality.trauma_potential||'?'}</span>`;
-    html += `<span style="color:var(--muted)">Healthy: ${td.quality.healthy_count} · Notable: ${td.quality.notable_count}</span>`;
-    html += `</div>`;
-  }
+    async function toggleThread(id) {
+      expandedId = expandedId === id ? null : id;
+      renderThreads();
+    }
 
-  html += `<h3>Findings (${td.findings.length})</h3>`;
-  for (const f of td.findings) {
-    const confClass = f.confidence === 'secure' ? 'badge-secure' : f.confidence === 'suspected' ? 'badge-suspected' : f.confidence === 'observation' ? 'badge-observation' : 'badge-healthy';
-    html += `<div class="finding">
-      <div class="user">@${esc(f.username||'?')}</div>
-      <div class="meta">
-        <span class="badge ${confClass}">${f.confidence||'?'}</span>
-        ${f.pattern_name ? `<span style="margin-left:8px">Pattern: ${esc(f.pattern_name)}</span>` : ''}
-        ${f.icd11_code ? `<span style="margin-left:8px;color:var(--yellow)">ICD-11: ${esc(f.icd11_code)}</span>` : ''}
-        ${f.comment_score ? `<span style="margin-left:8px">Score: ${f.comment_score}</span>` : ''}
-      </div>
-      ${f.evidence ? `<div class="evidence">"${esc(f.evidence)}"</div>` : ''}
-    </div>`;
-  }
-  panel.innerHTML = html;
-  panel.classList.add('open');
-  panel.scrollIntoView({behavior:'smooth'});
-}
+    async function loadThreadDetail(id) {
+      try {
+        let td = expandedCache[id];
+        if (!td) {
+          td = await fetchJSON(API + '/api/thread/' + id);
+          expandedCache[id] = td;
+        }
+        const el = document.getElementById('detail-inner-' + id);
+        if (!el) return;
+        let html = '';
+        if (td.quality) {
+          html += `<div class="dmeta">trauma-potenzial: ${td.quality.trauma_potential || '?'} · gesund: ${td.quality.healthy_count} · auffällig: ${td.quality.notable_count}</div>`;
+        }
+        if (!td.findings || td.findings.length === 0) {
+          html += '<div class="loading">Keine Findings vorhanden.</div>';
+        }
+        for (const f of (td.findings || [])) {
+          const confClass = f.confidence === 'secure' ? 'badge-secure' : f.confidence === 'suspected' ? 'badge-suspected' : f.confidence === 'observation' ? 'badge-observation' : 'badge-healthy';
+          html += `<div class="finding">
+        <span class="fuser">${esc(f.username || '?')}</span>
+        <span class="badge ${confClass}">${f.confidence || '?'}</span>
+        ${f.pattern_name ? `<span class="fmeta">${esc(f.pattern_name)}</span>` : ''}
+        ${f.icd11_code ? `<span class="fmeta" style="color:var(--amber)">${esc(f.icd11_code)}</span>` : ''}
+        ${f.comment_score ? `<span class="fmeta">score ${f.comment_score}</span>` : ''}
+        ${f.evidence ? `<span class="fevidence">"${esc(f.evidence)}"</span>` : ''}
+      </div>`;
+        }
+        el.innerHTML = html;
+      } catch (e) {
+        const el = document.getElementById('detail-inner-' + id);
+        if (el) el.innerHTML = '<div class="loading" style="color:var(--red)">Fehler beim Laden.</div>';
+      }
+    }
 
-function renderUsers() {
-  document.getElementById('filters').innerHTML = '';
-  let html = '';
-  for (const u of toxicUsers) {
-    const patterns = Object.entries(u.patterns).map(([k,v]) => `<span class="pattern-tag">${k} (${v})</span>`).join('');
-    html += `<div class="toxic-user">
-      <div class="username">@${esc(u.username)}</div>
-      <div class="stats-row">
-        <span>Findings: ${u.total_findings}</span>
-        <span style="color:var(--accent)">Auffällig: ${u.notable_count}</span>
-      </div>
+    function setFilter(f) {currentFilter = f; renderThreads();}
+
+    /* ---------- Sidebar: toxic users (always visible) ---------- */
+    function renderUserList() {
+      const sorted = [...toxicUsers].sort((a, b) => b.notable_count - a.notable_count);
+      let html = '';
+      for (const u of sorted) {
+        const patterns = Object.entries(u.patterns || {}).map(([k, v]) => `<span class="ptag">${esc(k)} ×${v}</span>`).join('');
+        const icd = [...new Set(u.icd11_refs || [])];
+        html += `<div class="toxic-user">
+      <div class="uname">${esc(u.username)}</div>
+      <div class="ustats">findings ${u.total_findings} · <span class="warn">auffällig ${u.notable_count}</span></div>
       <div class="patterns">${patterns}</div>
-      ${u.icd11_refs.length ? `<div class="icd11">ICD-11: ${[...new Set(u.icd11_refs)].join(', ')}</div>` : ''}
+      ${icd.length ? `<div class="icd">${icd.map(esc).join(' · ')}</div>` : ''}
     </div>`;
-  }
-  if (!html) html = '<div class="loading">No toxic users found.</div>';
-  document.getElementById('content').innerHTML = html;
-}
-
-function renderStatsView() {
-  document.getElementById('filters').innerHTML = '';
-  let html = '<h2 style="color:var(--accent);margin-bottom:16px">Pattern-Verteilung</h2>';
-  if (stats.pattern_distribution) {
-    const entries = Object.entries(stats.pattern_distribution).sort((a,b) => b[1]-a[1]);
-    const max = Math.max(...entries.map(e=>e[1]), 1);
-    html += '<div class="chart">';
-    for (const [name, count] of entries) {
-      const h = Math.round((count/max)*100);
-      const colors = ['#e94560','#ff9800','#2196f3','#4caf50','#9c27b0','#00bcd4','#ff5722','#607d8b','#795548','#cddc39'];
-      const color = colors[entries.indexOf([name,count]) % colors.length];
-      html += `<div class="chart-bar" style="height:${h}px;background:${color}">
-        <div class="bar-value">${count}</div>
-        <div class="bar-label">${name}</div>
-      </div>`;
+      }
+      document.getElementById('sidebar-title').textContent = `toxische user (${toxicUsers.length})`;
+      document.getElementById('user-list').innerHTML = html || '<div class="loading">Keine auffälligen User.</div>';
     }
-    html += '</div>';
-  }
 
-  html += '<h2 style="color:var(--accent);margin:24px 0 16px">Konfidenz-Verteilung</h2>';
-  if (stats.confidence_distribution) {
-    const entries = Object.entries(stats.confidence_distribution).sort((a,b) => b[1]-a[1]);
-    const max = Math.max(...entries.map(e=>e[1]), 1);
-    html += '<div class="chart">';
-    for (const [name, count] of entries) {
-      const h = Math.round((count/max)*100);
-      const color = name === 'healthy' ? '#4caf50' : name === 'suspected' ? '#ff9800' : name === 'observation' ? '#2196f3' : '#f44336';
-      html += `<div class="chart-bar" style="height:${h}px;background:${color}">
-        <div class="bar-value">${count}</div>
-        <div class="bar-label">${name}</div>
-      </div>`;
+    /* ---------- Stats view: ASCII bar charts ---------- */
+    function asciiBar(value, max, width = 24) {
+      const filled = max > 0 ? Math.round((value / max) * width) : 0;
+      return '█'.repeat(filled) + '░'.repeat(Math.max(0, width - filled));
     }
-    html += '</div>';
-  }
-  document.getElementById('content').innerHTML = html;
-}
 
-function setFilter(f) { currentFilter = f; renderView(); }
+    function renderChart(title, dist, colorMap) {
+      const entries = Object.entries(dist || {}).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...entries.map(e => e[1]), 1);
+      let html = `<div class="chart-block"><h3>${esc(title)}</h3>`;
+      for (const [name, count] of entries) {
+        const color = (colorMap && colorMap[name]) || 'var(--green)';
+        html += `<div class="ascii-row">
+      <span class="rlabel">${esc(name)}</span>
+      <span class="rbar" style="color:${color}">${asciiBar(count, max)}</span>
+      <span class="rval">${count}</span>
+    </div>`;
+      }
+      html += '</div>';
+      return html;
+    }
 
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function renderStatsView() {
+      document.getElementById('filters').innerHTML = '';
+      const confColors = {healthy: 'var(--green)', suspected: 'var(--amber)', observation: 'var(--green-dim)', secure: 'var(--red)'};
+      let html = '';
+      html += renderChart('pattern-verteilung', stats.pattern_distribution);
+      html += renderChart('konfidenz-verteilung', stats.confidence_distribution, confColors);
+      document.getElementById('content').innerHTML = html || '<div class="loading">Keine Statistik-Daten.</div>';
+    }
 
-// Nav
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentView = btn.dataset.view;
-    currentFilter = 'all';
-    renderView();
-  });
-});
-
-load();
-</script>
+    load();
+  </script>
 </body>
+
 </html>

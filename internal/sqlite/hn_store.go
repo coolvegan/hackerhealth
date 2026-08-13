@@ -550,6 +550,22 @@ func (s *HNStore) ListHNFindingsByThread(threadID int64) ([]hnmentalhealth.HNFin
 	return scanHNFindings(rows)
 }
 
+// CountThreadHealthyNotable zählt die Findings eines Threads getrennt nach
+// Konfidenz-Stufe. "healthy" = Findings mit confidence 'healthy', "notable" =
+// alle übrigen (secure/suspected/observation). Findings ohne Confidence zählen
+// als notable, damit healthy_count immer <= total_findings gilt.
+func (s *HNStore) CountThreadHealthyNotable(threadID int64) (healthy, notable int, err error) {
+	err = s.conn.QueryRow(
+		`SELECT
+			SUM(CASE WHEN cl.name = 'healthy' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN cl.name IS NULL OR cl.name != 'healthy' THEN 1 ELSE 0 END)
+		FROM hn_findings f
+		LEFT JOIN confidence_levels cl ON cl.id = f.confidence_id
+		WHERE f.thread_id = ?`, threadID,
+	).Scan(&healthy, &notable)
+	return healthy, notable, err
+}
+
 func (s *HNStore) ListHNFindingsByPattern(patternID int64) ([]hnmentalhealth.HNFinding, error) {
 	rows, err := s.conn.Query(
 		`SELECT id, user_id, thread_id, pattern_id, confidence_id, icd11_id, evidence, comment_score, ai_hint, ai_note FROM hn_findings WHERE pattern_id = ? ORDER BY id`, patternID,
