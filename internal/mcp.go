@@ -536,6 +536,64 @@ func registerHNTools(s *server.MCPServer, db *sqlite.DB) {
 		b, _ := json.Marshal(findings)
 		return mcp.NewToolResultText(string(b)), nil
 	})
+
+	// hn_finding_update
+	s.AddTool(mcp.NewTool("hn_finding_update",
+		mcp.WithDescription("Update an existing HN finding (e.g. to backfill a comment_id marker into ai_note)"),
+		mcp.WithNumber("id", mcp.Required(), mcp.Description("Finding ID to update")),
+		mcp.WithNumber("user_id", mcp.Description("User ID (optional override)")),
+		mcp.WithNumber("thread_id", mcp.Description("Thread ID (optional override)")),
+		mcp.WithNumber("pattern_id", mcp.Description("Pattern ID (optional override)")),
+		mcp.WithNumber("confidence_id", mcp.Description("Confidence level ID (optional override)")),
+		mcp.WithNumber("icd11_id", mcp.Description("ICD-11 code ID (optional override)")),
+		mcp.WithString("evidence", mcp.Description("Comment excerpt as evidence (optional override)")),
+		mcp.WithNumber("comment_score", mcp.Description("Score of the comment (optional override)")),
+		mcp.WithString("ai_hint", mcp.Description("AI hint (optional override)")),
+		mcp.WithString("ai_note", mcp.Description("AI's own note (optional override)")),
+	), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		id := req.GetInt("id", 0)
+		if id == 0 {
+			return mcp.NewToolResultError("id is required"), nil
+		}
+		existing, err := db.HN.GetHNFindingByID(int64(id))
+		if err != nil {
+			return mcp.NewToolResultError("finding not found: "+err.Error()), nil
+		}
+		args := req.GetArguments()
+		// Override only the fields explicitly provided.
+		if v, ok := args["user_id"]; ok {
+			existing.UserID = int64(v.(float64))
+		}
+		if v, ok := args["thread_id"]; ok {
+			existing.ThreadID = int64(v.(float64))
+		}
+		if _, ok := args["pattern_id"]; ok {
+			existing.PatternID = optIntPtr(req, "pattern_id")
+		}
+		if _, ok := args["confidence_id"]; ok {
+			existing.ConfidenceID = optIntPtr(req, "confidence_id")
+		}
+		if _, ok := args["icd11_id"]; ok {
+			existing.ICD11ID = optIntPtr(req, "icd11_id")
+		}
+		if v, ok := args["evidence"]; ok {
+			existing.Evidence = v.(string)
+		}
+		if v, ok := args["comment_score"]; ok {
+			existing.CommentScore = int(v.(float64))
+		}
+		if v, ok := args["ai_hint"]; ok {
+			existing.AIHint = v.(string)
+		}
+		if v, ok := args["ai_note"]; ok {
+			existing.AINote = v.(string)
+		}
+		if err := db.HN.UpdateHNFinding(existing); err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+		b, _ := json.Marshal(existing)
+		return mcp.NewToolResultText(string(b)), nil
+	})
 }
 
 // --- Health Tools ---
